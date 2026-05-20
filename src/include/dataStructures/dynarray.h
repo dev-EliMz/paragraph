@@ -116,7 +116,7 @@ void *dsa_array_get(DsaDynArray *array, size_t index) {
 void *dsa_array_push(DsaDynArray *array) {
     if (!array) return NULL;
 
-    int output = 0;
+    int output = 1;
     if (array->count >= array->capacity) {
         output = dsa_array_expand(array);
     }
@@ -141,13 +141,13 @@ int dsa_array_expand(DsaDynArray *array) {
     
     newBuffer = allocator->alloc(
             allocator->context,
-            newCapacity,
+            newCapacity * array->elementSize,
             array->alignment
             );
 
     if (!newBuffer) return 0;
 
-    memmove(newBuffer, array->data, array->count * array->elementSize);
+    memcpy(newBuffer, array->data, array->count * array->elementSize);
     
     if (allocator->free) allocator->free(allocator->context, array->data);
     
