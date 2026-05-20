@@ -31,4 +31,10 @@ struct arena {
     size_t offset;
 };
 
+size_t mem_align(size_t ptrOffset, size_t alignment);
+
+//macro com alignof (C11) TODO: incluir ifdefs para validar a versao C do compilador
+#define arena_alloc_t(arena, T) \
+    (T*)arena_alloc(arena, sizeof(T), _Alignof(T))
+
 #endif
