@@ -36,13 +36,22 @@ void dsa_array_clear(DsaDynArray *array);
  * um endereco retornado antes de uma insercao no array tem chance de
  * estar invalido pois o array pode crescer na insercao
  *
- * TODO: array expand
  */
 
 void *dsa_array_push(DsaDynArray *array);
 
 int dsa_array_safe_get(DsaDynArray *array, size_t index, void **outPtr);
 void *dsa_array_get(DsaDynArray *array, size_t index);
+
+
+/* 
+ * Dsa pop remove o ultimo elemento do array, o ponteiro retornado continua 
+ * valido ate a proxima operacao de push, diferentemente da funcao peek, que
+ * apenas retorna o ultimo elemento, sem invalidar o ponteiro
+ */
+
+void *dsa_array_pop(DsaDynArray *array);
+void *dsa_array_peek(DsaDynArray *array);
 
 int dsa_array_new(
         DsaAllocator *allocator, 
@@ -154,5 +163,22 @@ int dsa_array_expand(DsaDynArray *array) {
     array->data = newBuffer;
     array->capacity = newCapacity;
     return 1;
+}
+
+void *dsa_array_pop(DsaDynArray *array) {
+    if (!array) return NULL;
+    if (array->count < 1) return NULL;
+
+    void *ptr = array->data + (array->count - 1) * array->elementSize;
+    array->count -= 1;
+    return ptr;
+}
+
+void *dsa_array_peek(DsaDynArray *array) {
+    if (!array) return NULL;
+    if (array->count < 1) return NULL;
+
+    void *ptr = array->data + (array->count - 1) * array->elementSize;
+    return ptr;
 }
 #endif
