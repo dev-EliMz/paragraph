@@ -102,7 +102,12 @@ void dsa_array_destroy(DsaDynArray **arrayPtr) {
     DsaDynArray *array = (*arrayPtr);
     DsaAllocator *allocator = array->allocator;
 
-    if (allocator && allocator->free) allocator->free(allocator->context, array);
+    if (allocator && allocator->free) {
+        allocator->free(allocator->context, array->data);
+        allocator->free(allocator->context, array);
+    }
+
+    *arrayPtr = NULL;
 }
 
 int dsa_array_safe_get(DsaDynArray *array, size_t index, void **outPtr) {
