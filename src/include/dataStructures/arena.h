@@ -3,7 +3,7 @@
 
 typedef struct arena Arena;
 
-#include <stdlib.h>
+#include <stddef.h>
 #include <stdint.h>
 
 int arena_new(void* buffptr, size_t buffSize, Arena **outptr);
@@ -36,5 +36,11 @@ size_t mem_align(size_t ptrOffset, size_t alignment);
 //macro com alignof (C11) TODO: incluir ifdefs para validar a versao C do compilador
 #define arena_alloc_t(arena, T) \
     (T*)arena_alloc(arena, sizeof(T), _Alignof(T))
+
+// Arena Snapshots
+typedef struct dsa_snapshot DsaArenaSnapshot;
+
+int dsa_arena_snapshot_new(Arena *arena, DsaArenaSnapshot **outputPtr);
+int dsa_arena_rollback(DsaArenaSnapshot **snapPtr);
 
 #endif

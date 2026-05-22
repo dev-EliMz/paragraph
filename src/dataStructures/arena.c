@@ -52,5 +52,36 @@ void arena_reset(Arena *arena) {
     arena->offset = 0;
 }
 
+struct dsa_snapshot {
+    Arena *arena;
+    size_t offsetSnapshot;
+};
 
+int dsa_arena_snapshot_new(Arena *arena, DsaArenaSnapshot **outputPtr) {
+    if (!arena) return 0;
+    if (!outputPtr) return 0;
 
+    DsaArenaSnapshot *snap = arena_alloc(
+            arena,
+            sizeof(DsaArenaSnapshot), 
+            _Alignof(DsaArenaSnapshot)
+            );
+    
+    if (!snap) return 0;
+
+    snap->arena = arena;
+    snap->offsetSnapshot = arena_usedBytes(arena);
+    *outputPtr = snap;
+
+    return 1;
+} 
+
+int dsa_arena_rollback(DsaArenaSnapshot **snapPtr) {
+    if (!snapPtr || !(*snapPtr) || !(*snapPtr)->arena) return 0;
+
+    Arena *arena = (*snapPtr)->arena;
+    arena->offset = (*snapPtr)->offsetSnapshot;
+    
+    *snapPtr = NULL;
+    return 1;
+}
