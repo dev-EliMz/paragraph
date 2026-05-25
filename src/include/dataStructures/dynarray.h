@@ -28,7 +28,9 @@ int dsa_array_new(
 
 int dsa_array_expand(DsaDynArray *array);
 void dsa_array_destroy(DsaDynArray **arrayPtr);
-void dsa_array_clear(DsaDynArray *array);
+void *dsa_array_reset(DsaDynArray *array);
+ /* int dsa_array_copy(DsaDynArray *dest, DsaDynArray *src); */
+int dsa_array_reserve(DsaDynArray *array, size_t minCapacity);
 
 /*
  * devEli: use push e get para acessar os enderecos de memoria
@@ -61,6 +63,7 @@ int dsa_array_new(
     
     if (!outputPtr) return 0;
     if (!elementSize || capacity <= 0) return 0;
+    if ((align & (align - 1)) != 0) return 0;
     if (!allocator || !(allocator->alloc)) return 0;
     
     DsaDynArray *array = allocator->alloc(
@@ -186,4 +189,37 @@ void *dsa_array_peek(DsaDynArray *array) {
     void *ptr = array->data + (array->count - 1) * array->elementSize;
     return ptr;
 }
+
+void *dsa_array_reset(DsaDynArray *array) {
+    if (!array) return NULL;
+
+    void *ptr = array->data;
+    array->count = 0;
+    return ptr;
+}
+
+int dsa_array_reserve(DsaDynArray *array, size_t minCapacity) {
+    if (!array || !array->allocator || !array->allocator->alloc) return 0;
+    if (!minCapacity) return 0;
+
+    if (minCapacity <= array->capacity) return 1;
+    
+    DsaAllocator *allocator = array->allocator;
+    uint8_t *newBuffer = allocator->alloc(
+            allocator->context,
+            minCapacity * array->elementSize,
+            array->alignment
+            );
+
+    if (!newBuffer) return 0;
+
+    memcpy(newBuffer, array->data, array->count * array->elementSize);
+
+    if (allocator->free) allocator->free(allocator->context, array->data);
+    
+    array->data = newBuffer;
+    array->capacity = minCapacity;
+    return 1;
+}
+    
 #endif
