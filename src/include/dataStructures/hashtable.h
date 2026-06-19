@@ -1,6 +1,7 @@
 #ifndef DSA_HASHTABLE_H
 #define DSA_HASHTABLE_H
 
+#include <string.h>
 typedef struct dsa_hashtable DsaHashtable;
 typedef struct dsa_table_entry DsaTableEntry;
 
@@ -44,11 +45,12 @@ void *dsa_hashtable_remove(DsaHashtable *table, DsaStringView *key);
 int dsa_hashtable_expand(DsaHashtable *table);
 void dsa_hashtable_destroy(DsaHashtable **tablePtr);
 int dsa_hashtable_copy(const DsaHashtable *src, DsaHashtable *dest);
-void dsa_table_rehash(DsaTableEntry *table, size_t newCapacity); 
-int dsa_hashtable_rescue(
-        DsaAllocator *outputAllocator, 
-        DsaHashtable *origin, 
-        DsaHashtable **outputPtr);
+int dsa_table_rehash(DsaHashtable *table, DsaTableEntry* newBuckets, size_t newCapacity); 
+//int dsa_hashtable_rescue(
+//        DsaAllocator *outputAllocator, 
+//        DsaHashtable *origin, 
+//        DsaHashtable **outputPtr);
+//implementacao nao necessaria
 
 int dsa_hashtable_insert_internal(
         DsaHashtable *table, 
@@ -66,7 +68,7 @@ int dsa_hashtable_new(
         size_t capacity, float expansion, 
         DsaHashtable **outputPtr) {
 
-    if (!capacity || expansion < 1) return 0;
+    if (!capacity || expansion <= 1.0f) return 0;
     if (!outputPtr || !allocator || !allocator->alloc) return 0;
 
     DsaHashtable *table = allocator->alloc(
@@ -82,6 +84,13 @@ int dsa_hashtable_new(
             sizeof(DsaTableEntry) * capacity,
             _Alignof(DsaTableEntry)
             );
+    
+    if (!buckets) {
+        if (allocator->free) allocator->free(allocator->context, table);
+        return 0;
+    }
+
+    memset(buckets, 0, sizeof(DsaTableEntry) * capacity);
 
     table->count = 0;
     table->capacity = capacity;
@@ -164,7 +173,7 @@ int dsa_hashtable_insert_internal(
 }
 
 void *dsa_hashtable_get(DsaHashtable *table, DsaStringView *key) {
-    if (!table || !key || key->text ||key->size) return NULL;
+    if (!table || !key || !key->text || !key->size) return NULL;
 
     uint64_t hash = dsa_hash_str_djb2(key);
 
@@ -189,8 +198,8 @@ void *dsa_hashtable_find_internal(
             }
         }
 
+        if (entry->state == DSA_ENTRY_EMPTY) return NULL;
         index = (index + 1) % table->capacity;
-
         if (index == startIndex) return NULL;
     }
 }
@@ -211,22 +220,90 @@ void *dsa_hashtable_remove(DsaHashtable *table, DsaStringView *key) {
             if (entry->hash == hash && dsa_str_equals(&entry->key, key)) {
                 entryValue = entry->value;
                 entry->state = DSA_ENTRY_TOMBSTONE;
+                table->count -= 1;
+                return entryValue;
             }
         }
 
+        if (entry->state == DSA_ENTRY_EMPTY) return NULL;
         index = (index + 1) % table->capacity;
-
-        if (index == startIndex) break;
+        if (index == startIndex) return NULL;
     }
-    
-    return entryValue;
 }
 
+int dsa_hashtable_expand(DsaHashtable *table) {
+    if (!table || table->expFactor <= 1.0f) return 0;
+    if (!table->allocator || !table->allocator->alloc) return 0;
 
+    DsaAllocator *allocator = table->allocator;
+    size_t newSize = table->expFactor * table->capacity;
+    
+    DsaTableEntry* newBuckets = allocator->alloc(        
+            allocator->context,
+            (size_t) (sizeof(DsaTableEntry) * newSize),
+            _Alignof(DsaTableEntry)
+            );
+
+    if (!newBuckets) return 0;
+    memset(newBuckets, 0, sizeof(DsaTableEntry) * newSize);
+    return dsa_table_rehash(table, newBuckets, newSize);
+}
+
+int dsa_table_rehash(DsaHashtable *table, DsaTableEntry *newBuckets, size_t newCapacity) {
+    DsaTableEntry *entry = NULL;
+     
+    DsaTableEntry *oldBuckets = table->buckets;
+    size_t oldCapacity = table->capacity, oldCount = table->count;
+    table->buckets = newBuckets;
+    table->capacity = newCapacity;
+    table->count = 0;
+
+    int output = 1;
+    for (size_t i=0; i<oldCapacity; i++) {
+        entry = &oldBuckets[i];
+
+        if (entry->state == DSA_ENTRY_OCCUPIED) {
+            output = dsa_hashtable_insert_internal(
+                    table, 
+                    entry->hash, 
+                    &entry->key,
+                    entry->value
+                    );
+        }
+    }
+
+    if (!output) {
+        table->buckets = oldBuckets;
+        table->capacity = oldCapacity;
+        table->count = oldCount;
+
+        if (table->allocator->free) table->allocator->free(
+                table->allocator->context,
+                newBuckets
+                );
+
+        return 0;
+    }
+
+    if (table->allocator->free) table->allocator->free(
+            table->allocator->context,
+            oldBuckets
+            );
+
+    return 1;
+}
             
+uint64_t dsa_hash_str_djb2(DsaStringView *key) {
+    uint64_t hash = 5381;
 
+    for (size_t i=0; i<key->size; i++) {
+        char c = key->text[i];
 
+        hash = ((hash << 5) + hash) + c;
+    }
 
+    return hash;
+}
         
 
 
