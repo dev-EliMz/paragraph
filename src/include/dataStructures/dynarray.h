@@ -33,7 +33,7 @@ void *dsa_array_reset(DsaDynArray *array);
 int dsa_array_reserve(DsaDynArray *array, size_t minCapacity);
 
 /*
- * devEli: use push e get para acessar os enderecos de memoria
+ * use push e get para acessar os enderecos de memoria
  * do array. Caso o array cresca, os enderecos ficam invalidos,
  * um endereco retornado antes de uma insercao no array tem chance de
  * estar invalido pois o array pode crescer na insercao
@@ -62,7 +62,7 @@ int dsa_array_new(
         ) {
     
     if (!outputPtr) return 0;
-    if (!elementSize || capacity <= 0) return 0;
+    if (!elementSize || capacity <= 0 || expansion < 1.0f) return 0;
     if ((align & (align - 1)) != 0) return 0;
     if (!allocator || !(allocator->alloc)) return 0;
     
@@ -149,13 +149,15 @@ void *dsa_array_push(DsaDynArray *array) {
 
 int dsa_array_expand(DsaDynArray *array) {
     if (!array) return 0;
-    if (array->expFactor < 1) return 0;
+    if (array->expFactor < 1.0f) return 0;
     if (!array->allocator || !array->allocator->alloc) return 0;
     
     uint8_t *newBuffer;
     DsaAllocator *allocator = array->allocator;
     size_t newCapacity = (size_t) (array->capacity * array->expFactor); 
     
+    if (newCapacity <= array->capacity) newCapacity = array->capacity + 1;
+
     newBuffer = allocator->alloc(
             allocator->context,
             newCapacity * array->elementSize,

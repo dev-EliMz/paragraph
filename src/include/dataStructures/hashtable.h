@@ -1,7 +1,6 @@
 #ifndef DSA_HASHTABLE_H
 #define DSA_HASHTABLE_H
 
-#include <string.h>
 typedef struct dsa_hashtable DsaHashtable;
 typedef struct dsa_table_entry DsaTableEntry;
 
@@ -236,17 +235,19 @@ int dsa_hashtable_expand(DsaHashtable *table) {
     if (!table->allocator || !table->allocator->alloc) return 0;
 
     DsaAllocator *allocator = table->allocator;
-    size_t newSize = table->expFactor * table->capacity;
+    size_t newCapacity = (size_t) table->expFactor * table->capacity;
     
+    if (newCapacity <= table->capacity) newCapacity = table->capacity + 1;
+
     DsaTableEntry* newBuckets = allocator->alloc(        
             allocator->context,
-            (size_t) (sizeof(DsaTableEntry) * newSize),
+            sizeof(DsaTableEntry) * newCapacity,
             _Alignof(DsaTableEntry)
             );
 
     if (!newBuckets) return 0;
-    memset(newBuckets, 0, sizeof(DsaTableEntry) * newSize);
-    return dsa_table_rehash(table, newBuckets, newSize);
+    memset(newBuckets, 0, sizeof(DsaTableEntry) * newCapacity);
+    return dsa_table_rehash(table, newBuckets, newCapacity);
 }
 
 int dsa_table_rehash(DsaHashtable *table, DsaTableEntry *newBuckets, size_t newCapacity) {
