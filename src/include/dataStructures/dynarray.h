@@ -31,7 +31,7 @@ void dsa_array_destroy(DsaDynArray **arrayPtr);
 void *dsa_array_reset(DsaDynArray *array);
  /* int dsa_array_copy(DsaDynArray *dest, DsaDynArray *src); */
 int dsa_array_reserve(DsaDynArray *array, size_t minCapacity);
-
+int dsa_array_resize_internal(DsaDynArray *array, size_t newCapacity);
 /*
  * use push e get para acessar os enderecos de memoria
  * do array. Caso o array cresca, os enderecos ficam invalidos,
@@ -150,29 +150,12 @@ void *dsa_array_push(DsaDynArray *array) {
 int dsa_array_expand(DsaDynArray *array) {
     if (!array) return 0;
     if (array->expFactor < 1.0f) return 0;
-    if (!array->allocator || !array->allocator->alloc) return 0;
+    if (!array->allocator) return 0;
     
-    uint8_t *newBuffer;
-    DsaAllocator *allocator = array->allocator;
     size_t newCapacity = (size_t) (array->capacity * array->expFactor); 
-    
     if (newCapacity <= array->capacity) newCapacity = array->capacity + 1;
-
-    newBuffer = allocator->alloc(
-            allocator->context,
-            newCapacity * array->elementSize,
-            array->alignment
-            );
-
-    if (!newBuffer) return 0;
-
-    memcpy(newBuffer, array->data, array->count * array->elementSize);
     
-    if (allocator->free) allocator->free(allocator->context, array->data);
-    
-    array->data = newBuffer;
-    array->capacity = newCapacity;
-    return 1;
+    return dsa_array_resize_internal(array, newCapacity);
 }
 
 void *dsa_array_pop(DsaDynArray *array) {
@@ -206,21 +189,42 @@ int dsa_array_reserve(DsaDynArray *array, size_t minCapacity) {
 
     if (minCapacity <= array->capacity) return 1;
     
+    return dsa_array_resize_internal(array, minCapacity);
+}
+
+int dsa_array_resize_internal(DsaDynArray *array, size_t newCapacity) {
+    if (!array) return 0;
     DsaAllocator *allocator = array->allocator;
-    uint8_t *newBuffer = allocator->alloc(
+    uint8_t *newBuffer;
+    size_t newSizeInBytes = array->elementSize * newCapacity;
+
+    if (allocator->realloc) {
+         newBuffer = allocator->realloc(
             allocator->context,
-            minCapacity * array->elementSize,
-            array->alignment
+            array->data,
+            newSizeInBytes
             );
+        
+         if (!newBuffer) return 0;
+    }
+    else {
+        if (allocator->alloc) {
+            newBuffer = allocator->alloc(
+                allocator->context,
+                newSizeInBytes,
+                array->alignment
+                );
+        
+            if (!newBuffer) return 0;
 
-    if (!newBuffer) return 0;
+            memcpy(newBuffer, array->data, array->count * array->elementSize);
+            if (allocator->free) allocator->free(allocator->context, array->data);
+        }
+        else return 0;
+    }
 
-    memcpy(newBuffer, array->data, array->count * array->elementSize);
-
-    if (allocator->free) allocator->free(allocator->context, array->data);
-    
     array->data = newBuffer;
-    array->capacity = minCapacity;
+    array->capacity = newCapacity;
     return 1;
 }
     
