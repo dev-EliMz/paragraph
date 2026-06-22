@@ -4,8 +4,8 @@
 typedef struct dsa_hashtable DsaHashtable;
 typedef struct dsa_table_entry DsaTableEntry;
 
-#include "dataStructures/allocators.h"
-#include "dataStructures/stringview.h"
+#include "allocators.h"
+#include "stringview.h"
 
 int dsa_hashtable_new(
         DsaAllocator *allocator,
@@ -39,8 +39,5 @@ void *dsa_hashtable_find_internal(
         DsaHashtable *table,
         uint64_t hash,
         DsaStringView *key);
-
-       
-
 
 #endif

@@ -1,4 +1,4 @@
-#include "dataStructures/dynarray.h"
+#include "core/dynarray.h"
 
 struct dynarray {
     uint8_t *data;

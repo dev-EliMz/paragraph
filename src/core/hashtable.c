@@ -1,4 +1,4 @@
-#include "dataStructures/hashtable.h"
+#include "core/hashtable.h"
 
 enum DSA_ENTRY_STATE {
     DSA_ENTRY_EMPTY,

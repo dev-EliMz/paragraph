@@ -32,8 +32,8 @@ void *heap_allocator(void *context, size_t size, size_t alignment) {
 }
 
 void *arena_allocator(void *context, size_t size, size_t alignment) {
-    Arena *arena = (Arena*) context;
-    return arena_alloc(arena, size, alignment);
+    DsaArena *arena = (DsaArena*) context;
+    return dsa_arena_alloc(arena, size, alignment);
 }
 
 void heap_free(void *context, void *ptr) {
