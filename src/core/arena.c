@@ -1,27 +1,27 @@
-#include "../include/dataStructures/arena.h"
+#include "core/arena.h"
 
-size_t arena_getCapacity(const Arena *arena) {
+size_t dsa_arena_getCapacity(const DsaArena *arena) {
     return arena->capacity;
 }
 
-size_t arena_usedBytes(const Arena *arena) {
+size_t dsa_arena_usedBytes(const DsaArena *arena) {
     return arena->offset;
 }
 
-size_t arena_remainingBytes(const Arena *arena) {
+size_t dsa_arena_remainingBytes(const DsaArena *arena) {
     return arena->capacity - arena->offset;
 }
 
-int arena_new(void *buffptr, size_t buffSize, Arena **outptr) {
+int dsa_arena_new(void *buffptr, size_t buffSize, DsaArena **outptr) {
     if (!buffptr) return 0;
     if (!outptr) return 0;
     
-    if (sizeof(Arena) > buffSize) return 0;
+    if (sizeof(DsaArena) > buffSize) return 0;
 
-    Arena *arena = (Arena*) buffptr;
+    DsaArena *arena = (DsaArena*) buffptr;
     arena->offset = 0;
-    arena->memory = ((uint8_t*)buffptr) + sizeof(Arena);
-    arena->capacity = buffSize - sizeof(Arena);
+    arena->memory = ((uint8_t*)buffptr) + sizeof(DsaArena);
+    arena->capacity = buffSize - sizeof(DsaArena);
 
     *outptr = arena;
     return 1;
@@ -35,7 +35,7 @@ size_t mem_align(size_t ptrOffset, size_t alignment) {
     return ptrOffset;
 }
 
-void *arena_alloc(Arena *arena, size_t size, size_t align) {
+void *dsa_arena_alloc(DsaArena *arena, size_t size, size_t align) {
     if (!arena) return NULL;
     if (!align) return NULL;
     if ((align & (align - 1)) != 0) return NULL;
@@ -48,20 +48,20 @@ void *arena_alloc(Arena *arena, size_t size, size_t align) {
     return ptr;
 }
 
-void arena_reset(Arena *arena) {
+void dsa_arena_reset(DsaArena *arena) {
     arena->offset = 0;
 }
 
 struct dsa_snapshot {
-    Arena *arena;
+    DsaArena *arena;
     size_t offsetSnapshot;
 };
 
-int dsa_arena_snapshot_new(Arena *arena, DsaArenaSnapshot **outputPtr) {
+int dsa_arena_snapshot_new(DsaArena *arena, DsaArenaSnapshot **outputPtr) {
     if (!arena) return 0;
     if (!outputPtr) return 0;
 
-    DsaArenaSnapshot *snap = arena_alloc(
+    DsaArenaSnapshot *snap = dsa_arena_alloc(
             arena,
             sizeof(DsaArenaSnapshot), 
             _Alignof(DsaArenaSnapshot)
@@ -70,7 +70,7 @@ int dsa_arena_snapshot_new(Arena *arena, DsaArenaSnapshot **outputPtr) {
     if (!snap) return 0;
 
     snap->arena = arena;
-    snap->offsetSnapshot = arena_usedBytes(arena);
+    snap->offsetSnapshot = dsa_arena_usedBytes(arena);
     *outputPtr = snap;
 
     return 1;
@@ -79,7 +79,7 @@ int dsa_arena_snapshot_new(Arena *arena, DsaArenaSnapshot **outputPtr) {
 int dsa_arena_rollback(DsaArenaSnapshot **snapPtr) {
     if (!snapPtr || !(*snapPtr) || !(*snapPtr)->arena) return 0;
 
-    Arena *arena = (*snapPtr)->arena;
+    DsaArena *arena = (*snapPtr)->arena;
     arena->offset = (*snapPtr)->offsetSnapshot;
     
     *snapPtr = NULL;
