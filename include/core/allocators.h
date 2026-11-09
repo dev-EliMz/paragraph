@@ -25,24 +25,24 @@ typedef struct {
             );
 } DsaAllocator;
 
-void *heap_allocator(void *context, size_t size, size_t alignment) {
+static inline void *heap_allocator(void *context, size_t size, size_t alignment) {
     (void)alignment;
     (void)context;
     return malloc(size);
 }
 
-void *arena_allocator(void *context, size_t size, size_t alignment) {
+static inline void *arena_allocator(void *context, size_t size, size_t alignment) {
     DsaArena *arena = (DsaArena*) context;
     return dsa_arena_alloc(arena, size, alignment);
 }
 
-void heap_free(void *context, void *ptr) {
+static inline void heap_free(void *context, void *ptr) {
     (void)context;
     if (!ptr) return;
     free(ptr);
 }
 
-void *heap_reallocator(void *context, void *ptr, size_t size) {
+static inline void *heap_reallocator(void *context, void *ptr, size_t size) {
     (void)context;
     return realloc(ptr, size);
 }

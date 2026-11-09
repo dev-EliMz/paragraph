@@ -24,50 +24,18 @@ DsaVect dsa_vect_max(DsaVect a, DsaVect b);
 //int dsa_vect_length_squared(DsaVect vect);
 int dsa_vect_abs_distance(DsaVect a, DsaVect b);
 
-#include <stdlib.h>
+DsaVect dsa_rect_end(DsaRect rect);
+int dsa_rect_contains(DsaRect rect, DsaVect point);
+int dsa_rect_intersects(DsaRect a, DsaRect b);
+DsaRect dsa_rect_intersection(DsaRect a, DsaRect b);
+DsaRect dsa_rect_union(DsaRect a, DsaRect b);
+DsaRect dsa_rect_translate(DsaRect rect, DsaVect offset);
+DsaRect dsa_rect_expand(DsaRect rect, DsaVect amount);
+DsaRect dsa_rect_shink(DsaRect rect, DsaVect amount);
+int dsa_rect_equals(DsaRect a, DsaRect b);
+DsaVect dsa_rect_center(DsaRect rect);
+DsaRect dsa_rect_pad(DsaRect rect, DsaVect padding);
 
-DsaVect dsa_vect_add(DsaVect a, DsaVect b) {
-    return (DsaVect) {(a.x + b.x), (a.y + b.y)};
-}
 
-DsaVect dsa_vect_sub(DsaVect a, DsaVect b) {
-    return (DsaVect) {(a.x - b.x), (a.y - b.y)};
-}
-
-DsaVect dsa_vect_scalar_mul(DsaVect vect, int value) {
-    return (DsaVect) {
-        (vect.x * value), 
-        (vect.y * value)
-    };
-}
-
-DsaVect dsa_vect_scalar_div(DsaVect vect, int value) {
-    return (DsaVect) {
-        (vect.x / value),
-        (vect.y / value)
-    };
-}
-
-int dsa_vect_equals(DsaVect a, DsaVect b) {
-    return a.x == b.x && a.y == b.y;
-}
-
-DsaVect dsa_vect_min(DsaVect a, DsaVect b) {
-    return (DsaVect) {
-        (a.x < b.x ? a.x : b.x),
-        (a.y < b.y ? a.y : b.y)
-    };
-}
-
-DsaVect dsa_vect_max(DsaVect a, DsaVect b) {
-    return (DsaVect) {
-        (a.x > b.x ? a.x : b.x),
-        (a.y > b.y ? a.y : b.y)
-    };
-}
-
-int dsa_vect_abs_distance(DsaVect a, DsaVect b) {
-    return abs(a.x - b.x + a.y - b.y);
-}
 
 #endif

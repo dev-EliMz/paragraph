@@ -76,12 +76,13 @@ void dsa_array_destroy(DsaDynArray **arrayPtr) {
     *arrayPtr = NULL;
 }
 
-int dsa_array_safe_get(DsaDynArray *array, size_t index, void **outPtr) {
+int dsa_array_safe_get(DsaDynArray *array, size_t index, void *outPtr) {
     if (!array) return 0;
     if (index >= array->count) return 0;
 
+    void **out = (void**) outPtr;
     void *ptr = array->data + index * array->elementSize;
-    if (outPtr) *outPtr = ptr;
+    if (out) *out = ptr;
 
     return 1;
 }
@@ -112,7 +113,7 @@ void *dsa_array_push(DsaDynArray *array) {
 
 int dsa_array_expand(DsaDynArray *array) {
     if (!array) return 0;
-    if (array->expFactor < 1.0f) return 0;
+    if (array->expFactor <= 1.0f) return 0;
     if (!array->allocator) return 0;
     
     size_t newCapacity = (size_t) (array->capacity * array->expFactor); 

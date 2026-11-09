@@ -37,7 +37,7 @@ int dsa_array_resize_internal(DsaDynArray *array, size_t newCapacity);
 
 void *dsa_array_push(DsaDynArray *array);
 
-int dsa_array_safe_get(DsaDynArray *array, size_t index, void **outPtr);
+int dsa_array_safe_get(DsaDynArray *array, size_t index, void *outPtr);
 void *dsa_array_get(DsaDynArray *array, size_t index);
 
 

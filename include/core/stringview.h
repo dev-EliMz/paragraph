@@ -11,7 +11,8 @@ struct dsa_stringview {
     size_t size;
 };
 
-int dsa_str_equals(const DsaStringView *strPtrA, const DsaStringView *strPtrB) {
+static inline int dsa_str_equals(
+        const DsaStringView *strPtrA, const DsaStringView *strPtrB) {
     if (strPtrA == strPtrB) return 1;
     if (strPtrA->size != strPtrB->size) return 0;
 
